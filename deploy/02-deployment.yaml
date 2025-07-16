@@ -65,6 +65,7 @@ spec:
             - ALL
           seccompProfile:
             type: Localhost
+            localhostProfile: "profiles/clusteradmin.json"
       volumes:
       - name: webhook-certs
         secret:
