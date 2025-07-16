@@ -63,9 +63,13 @@ spec:
           capabilities:
             drop:
             - ALL
+          seccompProfile:
+            type: Localhost
       volumes:
       - name: webhook-certs
         secret:
           secretName: setmaxproc-webhook-certs
       securityContext:
-        fsGroup: 1000 
+        fsGroup: 1000
+        seccompProfile:
+          type: Localhost 
