@@ -15,10 +15,10 @@ is_openshift() {
     kubectl api-resources | grep -q "routes" && return 0 || return 1
 }
 
-# Build Docker image
-echo "Building Docker image..."
+# Build Podman image
+echo "Building Podman image..."
 cd "$PROJECT_DIR"
-docker build -t "$IMAGE_NAME:$IMAGE_TAG" .
+podman build -t "$IMAGE_NAME:$IMAGE_TAG" .
 
 # If running on OpenShift, we need to tag and push to internal registry
 if is_openshift; then
@@ -29,13 +29,13 @@ if is_openshift; then
     
     if [ -n "$REGISTRY" ]; then
         echo "Tagging image for OpenShift internal registry..."
-        docker tag "$IMAGE_NAME:$IMAGE_TAG" "$REGISTRY/$NAMESPACE/$IMAGE_NAME:$IMAGE_TAG"
+        podman tag "$IMAGE_NAME:$IMAGE_TAG" "$REGISTRY/$NAMESPACE/$IMAGE_NAME:$IMAGE_TAG"
         
         echo "Logging into OpenShift registry..."
-        docker login -u $(oc whoami) -p $(oc whoami -t) $REGISTRY
+        podman login -u $(oc whoami) -p $(oc whoami -t) $REGISTRY
         
         echo "Pushing image to OpenShift registry..."
-        docker push "$REGISTRY/$NAMESPACE/$IMAGE_NAME:$IMAGE_TAG"
+        podman push "$REGISTRY/$NAMESPACE/$IMAGE_NAME:$IMAGE_TAG"
         
         # Update deployment to use the registry image
         sed -i.bak "s|image: $IMAGE_NAME:latest|image: $REGISTRY/$NAMESPACE/$IMAGE_NAME:$IMAGE_TAG|g" "$SCRIPT_DIR/02-deployment.yaml"
@@ -48,8 +48,8 @@ else
     # For standard Kubernetes, you might want to push to a registry
     # Uncomment and modify these lines if you have a registry
     # REGISTRY="your-registry.com"
-    # docker tag "$IMAGE_NAME:$IMAGE_TAG" "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
-    # docker push "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
+    # podman tag "$IMAGE_NAME:$IMAGE_TAG" "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
+    # podman push "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
     # sed -i.bak "s|image: $IMAGE_NAME:latest|image: $REGISTRY/$IMAGE_NAME:$IMAGE_TAG|g" "$SCRIPT_DIR/02-deployment.yaml"
 fi
 

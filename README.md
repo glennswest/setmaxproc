@@ -67,7 +67,7 @@ This approach:
 ### Prerequisites
 
 - Kubernetes 1.16+ or OpenShift 4.x
-- Docker
+- Podman
 - kubectl or oc CLI
 - openssl (for certificate generation)
 
@@ -85,16 +85,16 @@ This approach:
    ```
 
 This script will:
-- Build the Docker image
+- Build the Podman image
 - Deploy all Kubernetes manifests
 - Generate TLS certificates
 - Configure the mutating webhook
 
 ### Manual Deployment
 
-1. **Build the Docker image:**
+1. **Build the Podman image:**
    ```bash
-   docker build -t setmaxproc-webhook:latest .
+   podman build -t setmaxproc-webhook:latest .
    ```
 
 2. **Apply Kubernetes manifests:**

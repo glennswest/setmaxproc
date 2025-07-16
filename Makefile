@@ -1,4 +1,4 @@
-.PHONY: build deploy test clean docker-build docker-push help
+.PHONY: build deploy test clean podman-build podman-push help
 
 # Variables
 IMAGE_NAME ?= setmaxproc-webhook
@@ -18,11 +18,11 @@ test: ## Run tests
 mod-tidy: ## Tidy Go modules
 	go mod tidy
 
-docker-build: ## Build Docker image
-	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
+podman-build: ## Build Podman image
+	podman build -t $(IMAGE_NAME):$(IMAGE_TAG) .
 
-docker-push: docker-build ## Build and push Docker image
-	docker push $(IMAGE_NAME):$(IMAGE_TAG)
+podman-push: podman-build ## Build and push Podman image
+	podman push $(IMAGE_NAME):$(IMAGE_TAG)
 
 deploy: ## Deploy the webhook to Kubernetes/OpenShift
 	./deploy/deploy.sh
@@ -71,4 +71,4 @@ test-default-calculation: ## Test the new default GOMAXPROCS calculation (max_cp
 dev-setup: mod-tidy build ## Setup for development
 	@echo "Development setup complete"
 
-all: mod-tidy test docker-build deploy ## Build, test, and deploy everything 
+all: mod-tidy test podman-build deploy ## Build, test, and deploy everything 
