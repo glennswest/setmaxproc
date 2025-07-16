@@ -11,4 +11,4 @@ spec:
     image: golang:1.21
     command: ["sleep", "infinity"]
     # No resource limits or requests - will use default calculation:
-    # GOMAXPROCS = max(system_cpus / container_count, 2) 
+    # GOMAXPROCS = max(system_cpus / 250, 2) 

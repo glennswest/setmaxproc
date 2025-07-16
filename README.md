@@ -21,7 +21,7 @@ This webhook helps optimize Go applications running in containers by automatical
 3. Calculates appropriate `GOMAXPROCS` value based on CPU resources:
    - Uses CPU limits if available
    - Falls back to CPU requests if no limits are set
-   - For containers without resource constraints: uses `max(system_cpus / container_count, 2)`
+   - For containers without resource constraints: uses `max(system_cpus / max_pods, 2)` where max_pods = 250
    - Rounds fractional CPU values up to the nearest integer
    - Minimum value is 1
 4. Adds the `GOMAXPROCS` environment variable to the container
@@ -41,24 +41,26 @@ The webhook identifies Go applications by checking:
 | 1.5 CPU     | 2               |
 | 2.0 CPU     | 2               |
 | 2.5 CPU     | 3               |
-| No limits (8 CPU node, 1 container) | 8 |
-| No limits (8 CPU node, 4 containers) | 2 |
-| No limits (2 CPU node, 1 container) | 2 |
-| No limits (1 CPU node, 1 container) | 2 |
+| No limits (512 CPU node) | 2 (512/250 = 2.048, rounded down) |
+| No limits (1000 CPU node) | 4 (1000/250 = 4) |
+| No limits (500 CPU node) | 2 (500/250 = 2) |
+| No limits (100 CPU node) | 2 (100/250 = 0.4, minimum is 2) |
 
 ### Default Calculation Logic
 
 For containers without CPU limits or requests, the webhook uses an intelligent default:
 
 ```
-GOMAXPROCS = max(system_cpu_count / container_count_in_pod, 2)
+GOMAXPROCS = max(system_cpu_count / max_pods_per_node, 2)
 ```
 
+Where `max_pods_per_node = 250` (typical Kubernetes node limit).
+
 This approach:
-- **Distributes system resources**: Divides available CPUs among containers in the pod
+- **Conservative resource allocation**: Assumes maximum pod density to prevent over-allocation
 - **Ensures minimum performance**: Guarantees at least 2 processes for reasonable concurrency
-- **Adapts to pod density**: Automatically adjusts when multiple containers share a pod
-- **Respects system limits**: Uses actual node CPU count as the baseline
+- **Node-aware scaling**: Considers the realistic maximum workload per node
+- **Prevents resource exhaustion**: Avoids setting excessively high GOMAXPROCS on large systems
 
 ## Installation
 
@@ -137,7 +139,7 @@ See the `examples/` directory for sample pod manifests:
 - `go-app-with-limits.yaml` - Go app with CPU limits
 - `go-app-high-cpu.yaml` - Go app with higher CPU allocation
 - `go-app-no-limits.yaml` - Go app without resource constraints (demonstrates default calculation)
-- `go-app-multi-container.yaml` - Multi-container pod (shows container count impact)
+- `go-app-multi-container.yaml` - Multi-container pod (shows consistent GOMAXPROCS across containers)
 - `go-app-skip-webhook.yaml` - Go app that skips webhook processing
 
 ### Testing

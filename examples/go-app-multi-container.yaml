@@ -10,12 +10,12 @@ spec:
   - name: go-app-1
     image: golang:1.21
     command: ["sleep", "infinity"]
-    # No resource limits - will use: max(system_cpus / 3, 2)
+    # No resource limits - will use: max(system_cpus / 250, 2)
   - name: go-app-2
     image: golang:1.21
     command: ["sleep", "infinity"]
-    # No resource limits - will use: max(system_cpus / 3, 2)
+    # No resource limits - will use: max(system_cpus / 250, 2)
   - name: go-app-3
     image: golang:1.21
     command: ["sleep", "infinity"]
-    # No resource limits - will use: max(system_cpus / 3, 2) 
+    # No resource limits - will use: max(system_cpus / 250, 2) 

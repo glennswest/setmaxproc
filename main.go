@@ -278,12 +278,13 @@ func calculateGOMAXPROCS(container corev1.Container, pod *corev1.Pod) string {
 		}
 	}
 	
-	// Calculate default value: maxsystemcpu / maxcontainers or 2, whichever is higher
+	// Calculate default value: maxsystemcpu / maxpods or 2, whichever is higher
+	// Assume max pods per node is 250 (typical Kubernetes limit)
 	maxSystemCPU := runtime.NumCPU()
-	maxContainers := len(pod.Spec.Containers)
+	maxPods := 250
 	
-	// Calculate maxsystemcpu / maxcontainers
-	calculatedDefault := maxSystemCPU / maxContainers
+	// Calculate maxsystemcpu / maxpods
+	calculatedDefault := maxSystemCPU / maxPods
 	if calculatedDefault < 1 {
 		calculatedDefault = 1
 	}
@@ -294,8 +295,8 @@ func calculateGOMAXPROCS(container corev1.Container, pod *corev1.Pod) string {
 		defaultValue = 2
 	}
 	
-	klog.Infof("No CPU limits/requests found, calculated default GOMAXPROCS=%d (system CPUs: %d, containers: %d)", 
-		defaultValue, maxSystemCPU, maxContainers)
+	klog.Infof("No CPU limits/requests found, calculated default GOMAXPROCS=%d (system CPUs: %d, max pods: %d)", 
+		defaultValue, maxSystemCPU, maxPods)
 	return strconv.Itoa(defaultValue)
 }
 

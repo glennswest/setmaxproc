@@ -61,8 +61,8 @@ verify: ## Verify the webhook is working
 	@echo "Checking webhook pods..."
 	kubectl get pods -n $(NAMESPACE) -l app=$(IMAGE_NAME)
 
-test-default-calculation: ## Test the new default GOMAXPROCS calculation
-	@echo "Testing default GOMAXPROCS calculation..."
+test-default-calculation: ## Test the new default GOMAXPROCS calculation (max_cpus/250 or 2)
+	@echo "Testing default GOMAXPROCS calculation (system_cpus/250 or 2, whichever is higher)..."
 	kubectl apply -f examples/go-app-no-limits.yaml
 	kubectl apply -f examples/go-app-multi-container.yaml
 	@echo "Check the logs to see calculated GOMAXPROCS values:"
