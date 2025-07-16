@@ -1,20 +1,19 @@
 package main
 
 import (
-	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/klog/v2"
 )
@@ -26,7 +25,7 @@ const (
 )
 
 var (
-	scheme = runtime.NewScheme()
+	scheme = k8sruntime.NewScheme()
 	codecs = serializer.NewCodecFactory(scheme)
 )
 
@@ -165,7 +164,7 @@ func mutateGOMAXPROCS(pod *corev1.Pod) []patchOperation {
 		}
 
 		// Calculate GOMAXPROCS value based on resource limits
-		gomaxprocs := calculateGOMAXPROCS(container)
+		gomaxprocs := calculateGOMAXPROCS(container, pod)
 		
 		klog.Infof("Adding GOMAXPROCS=%s to container %s", gomaxprocs, container.Name)
 
@@ -240,10 +239,7 @@ func hasGOMAXPROCS(container corev1.Container) bool {
 	return false
 }
 
-func calculateGOMAXPROCS(container corev1.Container) string {
-	// Default value
-	defaultValue := "1"
-	
+func calculateGOMAXPROCS(container corev1.Container, pod *corev1.Pod) string {
 	// Check for CPU limits
 	if container.Resources.Limits != nil {
 		if cpuLimit, exists := container.Resources.Limits[corev1.ResourceCPU]; exists {
@@ -282,8 +278,25 @@ func calculateGOMAXPROCS(container corev1.Container) string {
 		}
 	}
 	
-	klog.Infof("No CPU limits/requests found, using default GOMAXPROCS=%s", defaultValue)
-	return defaultValue
+	// Calculate default value: maxsystemcpu / maxcontainers or 2, whichever is higher
+	maxSystemCPU := runtime.NumCPU()
+	maxContainers := len(pod.Spec.Containers)
+	
+	// Calculate maxsystemcpu / maxcontainers
+	calculatedDefault := maxSystemCPU / maxContainers
+	if calculatedDefault < 1 {
+		calculatedDefault = 1
+	}
+	
+	// Use the higher of calculatedDefault or 2
+	defaultValue := calculatedDefault
+	if defaultValue < 2 {
+		defaultValue = 2
+	}
+	
+	klog.Infof("No CPU limits/requests found, calculated default GOMAXPROCS=%d (system CPUs: %d, containers: %d)", 
+		defaultValue, maxSystemCPU, maxContainers)
+	return strconv.Itoa(defaultValue)
 }
 
 func envString(key, defaultValue string) string {

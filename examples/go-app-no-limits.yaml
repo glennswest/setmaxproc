@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: go-app-no-limits
+  namespace: default
+  labels:
+    app: go-test
+spec:
+  containers:
+  - name: go-app
+    image: golang:1.21
+    command: ["sleep", "infinity"]
+    # No resource limits or requests - will use default calculation:
+    # GOMAXPROCS = max(system_cpus / container_count, 2) 
