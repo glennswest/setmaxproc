@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: setmaxproc-webhook
+  namespace: setmaxproc-webhook
+  labels:
+    app: setmaxproc-webhook
+spec:
+  selector:
+    app: setmaxproc-webhook
+  ports:
+  - name: webhook-api
+    port: 443
+    targetPort: 8443
+    protocol: TCP 

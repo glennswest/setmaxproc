@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: setmaxproc-webhook
+  namespace: setmaxproc-webhook
+  labels:
+    app: setmaxproc-webhook
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: setmaxproc-webhook
+  template:
+    metadata:
+      labels:
+        app: setmaxproc-webhook
+    spec:
+      serviceAccountName: setmaxproc-webhook
+      containers:
+      - name: webhook
+        image: setmaxproc-webhook:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8443
+          name: webhook-api
+        env:
+        - name: TLS_CERT_FILE
+          value: /etc/certs/tls.crt
+        - name: TLS_PRIVATE_KEY_FILE
+          value: /etc/certs/tls.key
+        - name: WEBHOOK_PORT
+          value: "8443"
+        volumeMounts:
+        - name: webhook-certs
+          mountPath: /etc/certs
+          readOnly: true
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: webhook-certs
+        secret:
+          secretName: setmaxproc-webhook-certs
+      securityContext:
+        fsGroup: 1000 
